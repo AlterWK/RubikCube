@@ -1,5 +1,5 @@
 
-import { _decorator, Component, Node } from 'cc';
+import { _decorator, Component } from 'cc';
 import { RubikCube } from './Rubik';
 const { ccclass, property } = _decorator;
 
@@ -18,6 +18,7 @@ export class SceneGame extends Component {
     initData() {
         this.rubikCube = new RubikCube(RUBIK_ORDER);
         this.rubikCube.initRubik();
+        this.rubikCube.rotateSide(0, 1, 90);
     }
 
     resetRubik() {

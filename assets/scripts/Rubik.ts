@@ -1,3 +1,7 @@
+import { Matrix } from "./Matrix";
+
+const CONTRAST_NUM = 5;
+
 export enum Location {
     UP = 0,
     LEFT = 1,
@@ -7,6 +11,16 @@ export enum Location {
     DOWN = 5,
     INVALID = 99,
 };
+
+const LOCATION_SET = [
+    Location.UP,
+    Location.LEFT,
+    Location.DOWN,
+    Location.RIGHT,
+    Location.FRONT,
+    Location.BEHIND,
+    Location.INVALID
+]
 
 export enum Color {
     WHITE = 0,
@@ -23,27 +37,40 @@ export class RubikCell {
     color: Color = Color.WHITE;
     row: number = 0;
     col: number = 0;
+    index: number = 0;
 
-    constructor(row: number, col: number, location: Location, color: Color) {
+    constructor(row: number, col: number, location: Location, color: Color, index: number) {
         this.row = row;
         this.col = col;
         this.location = location;
         this.color = color;
+        this.index = index;
     }
 
-    swap(other: RubikCell) {
-        let col = this.col;
-        let row = this.row;
-        let color = this.color;
-        let location = this.location;
+    reset(row: number, col: number, location: Location, color: Color, index?: number) {
+        this.row = row;
+        this.col = col;
+        this.location = location;
+        this.color = color;
+        this.index = index || this.index;
+    }
+
+    clone() {
+        return new RubikCell(this.row, this.col, this.location, this.color, this.index);
+    }
+
+    copy(other: RubikCell) {
         this.col = other.col;
         this.row = other.row;
         this.color = other.color;
         this.location = other.location;
-        other.col = col;
-        other.row = row;
-        other.location = location;
-        other.color = color;
+        this.index = other.index;
+    }
+
+    swap(other: RubikCell) {
+        let clone = this.clone();
+        this.copy(other);
+        other.copy(clone);
     }
 
     isValid() {
@@ -52,17 +79,28 @@ export class RubikCell {
 };
 
 export class RubikFace {
-    private width: number = 0;
-    private height: number = 0;
-    private originColor: Color = null!;
-    private originLocation: Location = null!;
+    private row: number = 0;
+    private col: number = 0;
+    private originColor: Color = Color.INVALID;
+    private originLocation: Location = Location.INVALID;
     private rubikCells: RubikCell[] = [];
+    private matrix: Matrix = null!;
 
-    constructor(width: number, height: number, location: Location, color: Color) {
-        this.height = height;
-        this.width = width;
+    static create(row: number, col: number, location: Location, color: Color) {
+        let ret = new RubikFace(row, col, location, color);
+        ret.init();
+        return ret;
+    }
+
+    constructor(row: number, col: number, location: Location, color: Color) {
+        this.col = col;
+        this.row = row;
         this.originColor = color;
         this.originLocation = location;
+    }
+
+    init() {
+        this.matrix = Matrix.create(this.row, this.col)
     }
 
     pushRubikCell(cell: RubikCell) {
@@ -70,46 +108,61 @@ export class RubikFace {
     }
 
     findRubikCell(row: number, col: number) {
-        if (row < 0 || row > this.width || col < 0 || col > this.height) {
+        if (row < 0 || row > this.row || col < 0 || col > this.col) {
             console.error(`search index is invalid!, current input is row:${row} col:${col}`);
-            return new RubikCell(0, 0, Location.INVALID, Color.INVALID);
+            return new RubikCell(0, 0, Location.INVALID, Color.INVALID, 0);
         }
-        let index = row * this.width + col;
+        let index = row * this.row + col;
         return this.rubikCells[index];
     }
 
     resetRubikCells() {
-        for (let i = 0; i < this.width; ++i) {
-            for (let j = 0; j < this.height; ++j) {
+        this.matrix.reset();
+        for (let i = 0; i < this.row; ++i) {
+            for (let j = 0; j < this.col; ++j) {
                 let rubikCell = this.findRubikCell(i, j);
-                rubikCell.col = i;
-                rubikCell.row = j;
-                rubikCell.location = this.originLocation;
-                rubikCell.color = this.originColor;
-            }
-        }
-    }
-    /* 
-       0, 1, 2      -1,  1,  1
-       3, 4, 5  --> -1,  0,  1
-       7, 8, 9      -1, -1, -1
-    */
-
-    convertToCenter() {
-        for (let i = 0; i < this.width; ++i) {
-            for (let j = 0; j < this.height; ++j) {
-                let rubikCell = this.findRubikCell(i, j);
-                rubikCell.row -= 1;
-                rubikCell.col -= 1;
+                rubikCell.reset(i, j, this.originLocation, this.originColor);
             }
         }
     }
 
-    convertToLeftTop() {
-
+    clone() {
+        let ret = RubikFace.create(this.row, this.col, this.originLocation, this.originColor);
+        for (const rubikCell of this.rubikCells) {
+            ret.rubikCells.push(rubikCell.clone());
+        }
+        return ret;
     }
 
     rotate(degree: number) {
+        this.matrix.rotate(degree);
+        let contrast = this.clone();
+        for (let i = 0; i < this.row; ++i) {
+            for (let j = 0; j < this.col; ++j) {
+                let targetIndex = this.matrix.findElement(i, j);
+                let rubikCell = this.findRubikCell(i, j);
+                rubikCell.copy(contrast.rubikCells[targetIndex]);
+                rubikCell.row = i;
+                rubikCell.col = j;
+            }
+        }
+    }
+
+    get releatedLocations() {
+        let ret: Location[] = [];
+        for (const location of LOCATION_SET) {
+            if (location != Location.INVALID && this.originLocation + location != CONTRAST_NUM) {
+                ret.push(location);
+            }
+        }
+        return ret;
+    }
+
+    swapWithRow(rubikFace: RubikFace, row: number) {
+
+    }
+
+    swapWithCol(rubikFace: RubikFace, col: number) {
 
     }
 }
@@ -119,22 +172,30 @@ const RUBIK_PLANE: number = 6;
 export class RubikCube {
 
     private order: number = 0;
-    private rubikFaces: RubikFace[] = [];
+    private rubikFaces: Map<Location, RubikFace> = new Map<Location, RubikFace>();
 
     constructor(order: number) {
         this.order = order;
     }
 
     initRubik() {
-        for (let i = 0; i < RUBIK_PLANE; ++i) {
-            let rubikFace: RubikFace = new RubikFace(this.order, this.order, i, i);
-            for (let row = 0; row < this.order; ++row) {
-                for (let col = 0; col < this.order; ++col) {
-                    rubikFace.pushRubikCell(new RubikCell(row, col, i, i));
-                }
+        this.rubikFaces.set(Location.UP, this.createOneRubikFace(Location.UP, Color.WHITE));
+        this.rubikFaces.set(Location.DOWN, this.createOneRubikFace(Location.DOWN, Color.YELLOW));
+        this.rubikFaces.set(Location.LEFT, this.createOneRubikFace(Location.LEFT, Color.BLUE));
+        this.rubikFaces.set(Location.RIGHT, this.createOneRubikFace(Location.RIGHT, Color.GREEN));
+        this.rubikFaces.set(Location.FRONT, this.createOneRubikFace(Location.FRONT, Color.RED));
+        this.rubikFaces.set(Location.BEHIND, this.createOneRubikFace(Location.BEHIND, Color.ORANGE));
+    }
+
+    createOneRubikFace(location: Location, color: Color) {
+        let rubikFace: RubikFace = RubikFace.create(this.order, this.order, location, color);
+        let index: number = 0;
+        for (let row = 0; row < this.order; ++row) {
+            for (let col = 0; col < this.order; ++col) {
+                rubikFace.pushRubikCell(new RubikCell(row, col, location, color, index++));
             }
-            this.rubikFaces.push(rubikFace);
         }
+        return rubikFace;
     }
 
     shuffleRubik() {
@@ -142,13 +203,43 @@ export class RubikCube {
     }
 
     resetRubik() {
-        for (let i = 0; i < RUBIK_PLANE; ++i) {
-            this.rubikFaces[i].resetRubikCells();
+        this.rubikFaces.forEach((rubikFace) => {
+            rubikFace.resetRubikCells();
+        })
+    }
+
+    rotateSide(location: Location, index: number, degree: number) {
+        this.rubikFaces.get(location)!.rotate(degree);
+        let releatedFaces = this.getReleatedFace(location);
+        for (let i = 0; i < releatedFaces.length - 1; ++i) {
+            if (location == Location.UP || location == Location.DOWN) {
+                releatedFaces[i].swapWithCol(releatedFaces[i + 1], index);
+            } else if (location == Location.LEFT || location == Location.RIGHT) {
+                releatedFaces[i].swapWithRow(releatedFaces[i + 1], index);
+            }
         }
     }
 
-    rotateSide(side: Location, index?: number) {
-
+    getReleatedFace(location: Location) {
+        let locations: Location[] = [];
+        switch (location) {
+            case Location.UP:
+            case Location.DOWN:
+            case Location.FRONT:
+            case Location.BEHIND:
+            case Location.LEFT:
+            case Location.RIGHT:
+                locations = this.rubikFaces.get(location)!.releatedLocations;
+                break;
+            default:
+                console.error("unknown location:", location);
+                break;
+        }
+        let ret: RubikFace[] = [];
+        for (let location of locations) {
+            ret.push(this.rubikFaces.get(location)!);
+        }
+        return ret;
     }
 
 }
