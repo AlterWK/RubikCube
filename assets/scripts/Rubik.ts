@@ -151,7 +151,7 @@ export class RubikFace {
     get releatedLocations() {
         let ret: Location[] = [];
         for (const location of LOCATION_SET) {
-            if (location != Location.INVALID && this.originLocation + location != CONTRAST_NUM) {
+            if (location != this.originLocation && location != Location.INVALID && this.originLocation + location != CONTRAST_NUM) {
                 ret.push(location);
             }
         }
@@ -159,13 +159,63 @@ export class RubikFace {
     }
 
     swapWithRow(rubikFace: RubikFace, row: number) {
-
+        for (let col = 0; col < this.col; ++col) {
+            let rubikCell = this.findRubikCell(row, col);
+            let otherCell = rubikFace.findRubikCell(row, col);
+            rubikCell.swap(otherCell);
+        }
     }
 
     swapWithCol(rubikFace: RubikFace, col: number) {
+        for (let row = 0; row < this.row; ++row) {
+            let rubikCell = this.findRubikCell(row, col);
+            let otherCell = rubikFace.findRubikCell(row, col);
+            rubikCell.swap(otherCell);
+        }
+    }
 
+    convertToString() {
+        let ret: string = '';
+        let format = this.originLocation == Location.LEFT || this.originLocation == Location.RIGHT ? '' : '\t';
+        for (let i = 0; i < this.row; ++i) {
+            ret += format + this.convertToStringOneRow(i, true);
+        }
+        return ret;
+    }
+
+    convertToStringOneRow(row: number, newLine?: boolean) {
+        let ret = '[';
+        for (let col = 0; col < this.col; ++col) {
+            ret += this.rubikCells[row * this.row + col].color
+            if (col == this.col - 1) {
+                ret += ']';
+            } else {
+                ret += ',';
+            }
+        }
+        ret += newLine ? "\n" : '';
+        return ret;
     }
 }
+
+/* 
+                [0, 0, 0]
+                [0, 0, 0]
+                [0, 0, 0]
+
+     [1, 1, 1]  [2, 2, 2]  [4, 4, 4]
+     [1, 1, 1]  [2, 2, 2]  [4, 4, 4]
+     [1, 1, 1]  [2, 2, 2]  [4, 4, 4]
+
+                [5, 5, 5]
+                [5, 5, 5]
+                [5, 5, 5]
+
+                [3, 3, 3]
+                [3, 3, 3]
+                [3, 3, 3]
+     !六面行列统一：由左至右，由上至下            
+*/
 
 const RUBIK_PLANE: number = 6;
 
@@ -208,14 +258,21 @@ export class RubikCube {
         })
     }
 
+    /** 
+     *!: index为按location方向正数第几行或是第几列
+    */
     rotateSide(location: Location, index: number, degree: number) {
-        this.rubikFaces.get(location)!.rotate(degree);
+        //!只有触摸面为边界面时才进行旋转,否则直交换关联面对应行列的值
+        if (index == 0 || index == this.order) {
+            this.rubikFaces.get(location)!.rotate(degree);
+        }
         let releatedFaces = this.getReleatedFace(location);
+        //todo:保证关联面按逆时针顺序排列
         for (let i = 0; i < releatedFaces.length - 1; ++i) {
             if (location == Location.UP || location == Location.DOWN) {
-                releatedFaces[i].swapWithCol(releatedFaces[i + 1], index);
-            } else if (location == Location.LEFT || location == Location.RIGHT) {
                 releatedFaces[i].swapWithRow(releatedFaces[i + 1], index);
+            } else if (location == Location.LEFT || location == Location.RIGHT) {
+                releatedFaces[i].swapWithCol(releatedFaces[i + 1], index);
             }
         }
     }
@@ -240,6 +297,23 @@ export class RubikCube {
             ret.push(this.rubikFaces.get(location)!);
         }
         return ret;
+    }
+
+    printRubikCube() {
+        let str = ``;
+        let strUp = this.rubikFaces.get(Location.UP)!.convertToString();
+        str += strUp;
+        for (let i = 0; i < 3; ++i) {
+            str += this.rubikFaces.get(Location.LEFT)!.convertToStringOneRow(i);
+            str += '\t' + this.rubikFaces.get(Location.FRONT)!.convertToStringOneRow(i);
+            str += '\t' + this.rubikFaces.get(Location.RIGHT)!.convertToStringOneRow(i);
+            str += '\n';
+        }
+        let strDown = this.rubikFaces.get(Location.DOWN)!.convertToString();
+        str += strDown;
+        let strBehind = this.rubikFaces.get(Location.BEHIND)!.convertToString();
+        str += strBehind;
+        console.log("当前魔方排列为:\n", str);
     }
 
 }
