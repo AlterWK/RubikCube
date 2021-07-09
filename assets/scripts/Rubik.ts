@@ -1,3 +1,4 @@
+import * as cc from 'cc';
 import { Matrix } from "./Matrix";
 
 const CONTRAST_NUM = 5;
@@ -22,6 +23,18 @@ const LOCATION_SET = [
     Location.INVALID
 ]
 
+const a = 1;
+
+//逆时针
+const RELEATED_SET: { [index: number]: Location[] } = {
+    0: [Location.LEFT, Location.FRONT, Location.RIGHT, Location.BEHIND],
+    1: [Location.UP, Location.BEHIND, Location.DOWN, Location.FRONT],
+    2: [Location.UP, Location.LEFT, Location.DOWN, Location.RIGHT],
+    3: [Location.UP, Location.RIGHT, Location.DOWN, Location.LEFT],
+    4: [Location.UP, Location.FRONT, Location.DOWN, Location.BEHIND],
+    5: [Location.LEFT, Location.FRONT, Location.RIGHT, Location.BEHIND],
+}
+
 export enum Color {
     WHITE = 0,
     BLUE = 1,
@@ -31,6 +44,15 @@ export enum Color {
     YELLOW = 5,
     INVALID = 99,
 };
+
+export const RenderColor: { [inbdex: number]: cc.Color } = {
+    0: cc.color(255, 255, 255),
+    1: cc.color(0, 0, 255),
+    2: cc.color(255, 0, 0),
+    3: cc.color(255, 125, 0),
+    4: cc.color(0, 255, 0),
+    5: cc.color(255, 255, 0),
+}
 
 export class RubikCell {
     location: Location = Location.UP;
@@ -149,6 +171,7 @@ export class RubikFace {
     }
 
     get releatedLocations() {
+        return RELEATED_SET[this.originLocation];
         let ret: Location[] = [];
         for (const location of LOCATION_SET) {
             if (location != this.originLocation && location != Location.INVALID && this.originLocation + location != CONTRAST_NUM) {
@@ -249,7 +272,15 @@ export class RubikCube {
     }
 
     shuffleRubik() {
-
+        for (let i = 0; i < 10; ++i) {
+            let location = Math.floor(Math.random() * RUBIK_PLANE);
+            let index = Math.floor(Math.random() * this.order + 1);
+            let degree = 90 * Math.floor(Math.random() * 4 - Math.random() * 4);
+            console.log(`当前旋转面:${location},边:${index},角度:${degree}`);
+            this.rotateSide(location, index, degree);
+            this.printRubikCube();
+            console.log("* * * * * * * * * *");
+        }
     }
 
     resetRubik() {
@@ -263,16 +294,29 @@ export class RubikCube {
     */
     rotateSide(location: Location, index: number, degree: number) {
         //!只有触摸面为边界面时才进行旋转,否则直交换关联面对应行列的值
-        if (index == 0 || index == this.order) {
+        let isMiddle = !(index == 1 || index == this.order);
+        if (!isMiddle) {
             this.rubikFaces.get(location)!.rotate(degree);
         }
         let releatedFaces = this.getReleatedFace(location);
-        //todo:保证关联面按逆时针顺序排列
-        for (let i = 0; i < releatedFaces.length - 1; ++i) {
-            if (location == Location.UP || location == Location.DOWN) {
-                releatedFaces[i].swapWithRow(releatedFaces[i + 1], index);
-            } else if (location == Location.LEFT || location == Location.RIGHT) {
-                releatedFaces[i].swapWithCol(releatedFaces[i + 1], index);
+        if (degree < 0) {
+            degree += 360;
+        }
+        for (; degree > 0; degree -= 90) {
+            for (let i = 0; i < releatedFaces.length - 1; ++i) {
+                if (location == Location.UP) {
+                    releatedFaces[i].swapWithRow(releatedFaces[i + 1], isMiddle ? index - 1 : 0);
+                } else if (location == Location.DOWN) {
+                    releatedFaces[i].swapWithRow(releatedFaces[i + 1], isMiddle ? index - 1 : this.order - 1);
+                } else if (location == Location.LEFT) {
+                    releatedFaces[i].swapWithCol(releatedFaces[i + 1], isMiddle ? index - 1 : 0);
+                } else if (location == Location.RIGHT) {
+                    releatedFaces[i].swapWithCol(releatedFaces[i + 1], isMiddle ? index - 1 : this.order - 1);
+                } else if (location == Location.FRONT) {
+                    releatedFaces[i].swapWithRow(releatedFaces[i + 1], isMiddle ? index - 1 : this.order - 1);
+                } else if (location == Location.BEHIND) {
+                    releatedFaces[i].swapWithRow(releatedFaces[i + 1], isMiddle ? index - 1 : 0);
+                }
             }
         }
     }
