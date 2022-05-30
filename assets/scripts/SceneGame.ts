@@ -1,4 +1,3 @@
-
 import * as cc from 'cc';
 import { NodeRubik } from './NodeRubik';
 import { Location, RenderColor, RubikCube } from './Rubik';
@@ -8,7 +7,6 @@ const RUBIK_ORDER: number = 3;
 
 @ccclass('SceneGame')
 export class SceneGame extends cc.Component {
-
     @property(cc.Button)
     btnShow: cc.Button = null!;
     @property(cc.Button)
@@ -34,16 +32,14 @@ export class SceneGame extends cc.Component {
     }
 
     initUI() {
-        this.btnShow.node.on("click", this.onBtnShow, this);
-        this.btnShuffle.node.on("click", this.onBtnShuffle, this);
-        this.btnReset.node.on("click", this.onBtnRset, this);
+        this.btnShow.node.on('click', this.onBtnShow, this);
+        this.btnShuffle.node.on('click', this.onBtnShuffle, this);
+        this.btnReset.node.on('click', this.onBtnRset, this);
         this.testGraphics();
         this.createRubik();
     }
 
-    registerEvents() {
-
-    }
+    registerEvents() {}
 
     testGraphics() {
         let node = new cc.Node();
@@ -82,6 +78,4 @@ export class SceneGame extends cc.Component {
             }
         }
     }
-
 }
-

@@ -20,14 +20,13 @@ async function loadRes(url: string, type: typeof cc.Asset) {
                 } else {
                     reject(error.message);
                 }
-            })
+            });
         }
     });
 }
 
 @ccclass('NodeRubik')
 export class NodeRubik extends cc.Component {
-
     cubeType: CubeType = CubeType.CENTER;
     rubikCells: RubikCell[] = [];
 
@@ -38,9 +37,7 @@ export class NodeRubik extends cc.Component {
         return node;
     }
 
-    init() {
-
-    }
+    init() {}
 
     onLoad() {
         this.initData();
@@ -48,17 +45,11 @@ export class NodeRubik extends cc.Component {
         this.registerEvents();
     }
 
-    initData() {
+    initData() {}
 
-    }
+    initUI() {}
 
-    initUI() {
-
-    }
-
-    registerEvents() {
-
-    }
+    registerEvents() {}
 
     set meshColor(color: cc.Color) {
         let meshRender = this.getComponent(cc.MeshRenderer)!;

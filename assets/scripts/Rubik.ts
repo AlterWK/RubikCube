@@ -1,5 +1,5 @@
 import * as cc from 'cc';
-import { Matrix } from "./Matrix";
+import { Matrix } from './Matrix';
 
 const CONTRAST_NUM = 5;
 
@@ -11,17 +11,9 @@ export enum Location {
     RIGHT = 4,
     DOWN = 5,
     INVALID = 99,
-};
+}
 
-const LOCATION_SET = [
-    Location.UP,
-    Location.LEFT,
-    Location.DOWN,
-    Location.RIGHT,
-    Location.FRONT,
-    Location.BEHIND,
-    Location.INVALID
-]
+const LOCATION_SET = [Location.UP, Location.LEFT, Location.DOWN, Location.RIGHT, Location.FRONT, Location.BEHIND, Location.INVALID];
 
 const a = 1;
 
@@ -33,7 +25,7 @@ const RELEATED_SET: { [index: number]: Location[] } = {
     3: [Location.UP, Location.RIGHT, Location.DOWN, Location.LEFT],
     4: [Location.UP, Location.FRONT, Location.DOWN, Location.BEHIND],
     5: [Location.LEFT, Location.FRONT, Location.RIGHT, Location.BEHIND],
-}
+};
 
 export enum Color {
     WHITE = 0,
@@ -43,7 +35,7 @@ export enum Color {
     GREEN = 4,
     YELLOW = 5,
     INVALID = 99,
-};
+}
 
 export const RenderColor: { [inbdex: number]: cc.Color } = {
     0: cc.color(255, 255, 255),
@@ -52,7 +44,7 @@ export const RenderColor: { [inbdex: number]: cc.Color } = {
     3: cc.color(255, 125, 0),
     4: cc.color(0, 255, 0),
     5: cc.color(255, 255, 0),
-}
+};
 
 export class RubikCell {
     location: Location = Location.UP;
@@ -98,7 +90,7 @@ export class RubikCell {
     isValid() {
         return this.location < Location.INVALID && this.color < Color.INVALID;
     }
-};
+}
 
 export class RubikFace {
     private row: number = 0;
@@ -122,11 +114,11 @@ export class RubikFace {
     }
 
     init() {
-        this.matrix = Matrix.create(this.row, this.col)
+        this.matrix = Matrix.create(this.row, this.col);
     }
 
     pushRubikCell(cell: RubikCell) {
-        this.rubikCells.push(cell)
+        this.rubikCells.push(cell);
     }
 
     findRubikCell(row: number, col: number) {
@@ -209,14 +201,14 @@ export class RubikFace {
     convertToStringOneRow(row: number, newLine?: boolean) {
         let ret = '[';
         for (let col = 0; col < this.col; ++col) {
-            ret += this.rubikCells[row * this.row + col].color
+            ret += this.rubikCells[row * this.row + col].color;
             if (col == this.col - 1) {
                 ret += ']';
             } else {
                 ret += ',';
             }
         }
-        ret += newLine ? "\n" : '';
+        ret += newLine ? '\n' : '';
         return ret;
     }
 }
@@ -243,7 +235,6 @@ export class RubikFace {
 const RUBIK_PLANE: number = 6;
 
 export class RubikCube {
-
     private order: number = 0;
     private rubikFaces: Map<Location, RubikFace> = new Map<Location, RubikFace>();
 
@@ -279,19 +270,19 @@ export class RubikCube {
             console.log(`当前旋转面:${location},边:${index},角度:${degree}`);
             this.rotateSide(location, index, degree);
             this.printRubikCube();
-            console.log("* * * * * * * * * *");
+            console.log('* * * * * * * * * *');
         }
     }
 
     resetRubik() {
         this.rubikFaces.forEach((rubikFace) => {
             rubikFace.resetRubikCells();
-        })
+        });
     }
 
-    /** 
+    /**
      *!: index为按location方向正数第几行或是第几列
-    */
+     */
     rotateSide(location: Location, index: number, degree: number) {
         //!只有触摸面为边界面时才进行旋转,否则直交换关联面对应行列的值
         let isMiddle = !(index == 1 || index == this.order);
@@ -333,7 +324,7 @@ export class RubikCube {
                 locations = this.rubikFaces.get(location)!.releatedLocations;
                 break;
             default:
-                console.error("unknown location:", location);
+                console.error('unknown location:', location);
                 break;
         }
         let ret: RubikFace[] = [];
@@ -357,7 +348,6 @@ export class RubikCube {
         str += strDown;
         let strBehind = this.rubikFaces.get(Location.BEHIND)!.convertToString();
         str += strBehind;
-        console.log("当前魔方排列为:\n", str);
+        console.log('当前魔方排列为:\n', str);
     }
-
 }

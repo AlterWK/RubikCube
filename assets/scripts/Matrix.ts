@@ -79,7 +79,7 @@ export class Matrix {
     */
     rotate(degree: number) {
         if (degree % 90 != 0) {
-            console.error("degree must be integral multiply 90");
+            console.error('degree must be integral multiply 90');
             return;
         }
         if (degree == 0) {
@@ -110,5 +110,4 @@ export class Matrix {
             }
         }
     }
-
 }
