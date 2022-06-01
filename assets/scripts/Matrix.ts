@@ -12,7 +12,7 @@ export class Point {
     }
 
     rotate(degree: number) {
-        let radians = degree / 180;
+        let radians = (degree / 180) * Math.PI;
         let sin = Math.sin(radians);
         let cos = Math.cos(radians);
         let x = this.x;
@@ -91,7 +91,7 @@ export class Matrix {
         // 执行一次逆时针90度旋转
         for (let i = 0; i < Math.floor(this.row / 2); i++) {
             for (let j = i; j < this.col - i - 1; j++) {
-                // console.log(`x:${i}, y:${j}`)
+                // console.log(`x:${i}, y:${j}`);
                 let temp = this.elements[i][j];
                 this.elements[i][j] = this.elements[j][this.col - i - 1];
                 this.elements[j][this.col - i - 1] = this.elements[this.col - i - 1][this.col - j - 1];

@@ -4,18 +4,18 @@
   "_objFlags": 0,
   "_native": "",
   "_effectAsset": {
-    "__uuid__": "2503d61a-3a64-4e94-be98-d25e830215fc",
+    "__uuid__": "a3cd009f-0ab0-420d-9278-b9fdab939bbc",
     "__expectedType__": "cc.EffectAsset"
   },
   "_techIdx": "0",
   "_defines": [
-    {}
+    {
+      "USE_VERTEX_COLOR": true
+    }
   ],
   "_states": [
     {
-      "rasterizerState": {
-        "polygonMode": 2
-      },
+      "rasterizerState": {},
       "depthStencilState": {},
       "blendState": {
         "targets": [
@@ -26,12 +26,9 @@
   ],
   "_props": [
     {
-      "mainColor": {
-        "__type__": "cc.Color",
-        "r": 87,
-        "g": 124,
-        "b": 85,
-        "a": 255
+      "mainTexture": {
+        "__uuid__": "2474064e-fe61-494e-a9c8-f6e9248ce47f@6c48a",
+        "__expectedType__": "cc.Texture2D"
       }
     }
   ]

@@ -1,5 +1,6 @@
 import * as cc from 'cc';
 import { RubikCell } from './Rubik';
+import { Location } from './Rubik';
 const { ccclass, property } = cc._decorator;
 
 enum CubeType {
@@ -58,5 +59,27 @@ export class NodeRubik extends cc.Component {
         //*:获取当前材质，是材质变体，改变不会影响其他材质
         let material = meshRender.material;
         material?.setProperty('mainColor', color, 0);
+    }
+
+    paintColor(datas: { [index: number]: cc.Color }) {
+        let render = this.getComponent(cc.MeshRenderer)!;
+        let config = cc.utils.readMesh(render?.mesh!);
+        let colors: number[] = [];
+        this.parseColor(colors, datas[Location.FRONT]);
+        this.parseColor(colors, datas[Location.RIGHT]);
+        this.parseColor(colors, datas[Location.BEHIND]);
+        this.parseColor(colors, datas[Location.LEFT]);
+        this.parseColor(colors, datas[Location.UP]);
+        this.parseColor(colors, datas[Location.DOWN]);
+        config.colors = colors;
+        config.uvs = [];
+        render.mesh = cc.utils.createMesh(config);
+    }
+
+    parseColor(colors: number[], color: cc.Color) {
+        color = color || cc.Color.BLACK;
+        for (let i = 0; i < 4; ++i) {
+            colors.push(color.r, color.g, color.b, 255);
+        }
     }
 }

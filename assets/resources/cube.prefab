@@ -8,13 +8,14 @@
       "__id__": 1
     },
     "optimizationPolicy": 0,
-    "asyncLoadAssets": false,
-    "persistent": false
+    "persistent": false,
+    "asyncLoadAssets": false
   },
   {
     "__type__": "cc.Node",
     "_name": "cube",
     "_objFlags": 0,
+    "__editorExtras__": {},
     "_parent": null,
     "_children": [],
     "_active": true,
@@ -68,13 +69,13 @@
     "__prefab": {
       "__id__": 3
     },
+    "_visFlags": 0,
     "_materials": [
       {
         "__uuid__": "c883bbd3-2d3c-4b26-b86b-681c52ade903",
         "__expectedType__": "cc.Material"
       }
     ],
-    "_visFlags": 0,
     "lightmapSettings": {
       "__id__": 4
     },
@@ -84,6 +85,8 @@
     },
     "_shadowCastingMode": 0,
     "_shadowReceivingMode": 1,
+    "_shadowBias": 0,
+    "_shadowNormalBias": 0,
     "_enableMorph": true,
     "_id": ""
   },
