@@ -1,3 +1,5 @@
+import { cloneDeep } from 'lodash-es';
+
 export class Point {
     x: number = 0;
     y: number = 0;
@@ -22,13 +24,13 @@ export class Point {
     }
 }
 
-export class Matrix {
+export class Matrix<T> {
     row: number = 0;
     col: number = 0;
-    private elements: number[][] = [];
+    private elements: T[][] = [];
 
-    static create(row: number, col: number) {
-        let ret = new Matrix(row, col);
+    static create<T>(row: number, col: number) {
+        let ret = new Matrix<T>(row, col);
         ret.init();
         return ret;
     }
@@ -39,18 +41,15 @@ export class Matrix {
     }
 
     init() {
-        for (let row = 0; row < this.row; ++row) {
-            this.elements.push([]);
-            for (let col = 0; col < this.col; ++col) {
-                this.elements[row].push(row * this.row + col);
-            }
+        for (let i = 0; i < this.row; ++i) {
+            this.elements[i] = [];
         }
     }
 
     findElement(row: number, col: number) {
         if (row < 0 || row > this.row || col < 0 || col > this.col) {
             console.error(`search index is invalid!, current input is row:${row} col:${col}`);
-            return -1;
+            return null;
         }
         return this.elements[row][col];
     }
@@ -58,7 +57,7 @@ export class Matrix {
     clone() {
         let ret = new Matrix(this.row, this.col);
         for (const element of this.elements) {
-            let temp: number[] = [];
+            let temp: T[] = [];
             for (const entity of element) {
                 temp.push(entity);
             }
@@ -103,10 +102,10 @@ export class Matrix {
         this.rotate(degree);
     }
 
-    reset() {
+    reset(elements: T[]) {
         for (let row = 0; row < this.row; ++row) {
             for (let col = 0; col < this.col; ++col) {
-                this.elements[row][col] = row * this.row + col;
+                this.elements[row][col] = elements[row * this.row + col];
             }
         }
     }

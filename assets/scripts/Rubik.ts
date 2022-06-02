@@ -7,7 +7,7 @@ export enum Location {
     UP = 0,
     LEFT = 1,
     FRONT = 2,
-    BEHIND = 3,
+    BACK = 3,
     RIGHT = 4,
     DOWN = 5,
     INVALID = -1,
@@ -15,12 +15,12 @@ export enum Location {
 
 //逆时针
 const RELEATED_SET: { [index: number]: Location[] } = {
-    [Location.UP]: [Location.LEFT, Location.FRONT, Location.RIGHT, Location.BEHIND],
-    [Location.LEFT]: [Location.UP, Location.BEHIND, Location.DOWN, Location.FRONT],
+    [Location.UP]: [Location.LEFT, Location.FRONT, Location.RIGHT, Location.BACK],
+    [Location.LEFT]: [Location.UP, Location.BACK, Location.DOWN, Location.FRONT],
     [Location.FRONT]: [Location.UP, Location.LEFT, Location.DOWN, Location.RIGHT],
-    [Location.BEHIND]: [Location.UP, Location.RIGHT, Location.DOWN, Location.LEFT],
-    [Location.RIGHT]: [Location.UP, Location.FRONT, Location.DOWN, Location.BEHIND],
-    [Location.DOWN]: [Location.LEFT, Location.FRONT, Location.RIGHT, Location.BEHIND],
+    [Location.BACK]: [Location.UP, Location.RIGHT, Location.DOWN, Location.LEFT],
+    [Location.RIGHT]: [Location.UP, Location.FRONT, Location.DOWN, Location.BACK],
+    [Location.DOWN]: [Location.LEFT, Location.FRONT, Location.RIGHT, Location.BACK],
 };
 
 export enum Color {
@@ -33,11 +33,12 @@ export enum Color {
     INVALID = -1,
 }
 
+// !:这里颜色的选取有些问题，使用白，橙两色时，渲染出来会有相同颜色的面，很奇怪
 export const RenderColor: { [inbdex: number]: cc.Color } = {
-    [Color.INDIGO]: cc.color(0, 255, 255),
+    [Color.INDIGO]: cc.color(0, 255, 255), //white
     [Color.BLUE]: cc.color(0, 0, 255),
     [Color.RED]: cc.color(255, 0, 0),
-    [Color.PURPLE]: cc.color(255, 0, 255),
+    [Color.PURPLE]: cc.color(255, 0, 255), //orange
     [Color.GREEN]: cc.color(0, 255, 0),
     [Color.YELLOW]: cc.color(255, 255, 0),
 };
@@ -94,7 +95,7 @@ export class RubikFace {
     private originColor: Color = Color.INVALID;
     private originLocation: Location = Location.INVALID;
     private rubikCells: RubikCell[] = [];
-    private matrix: Matrix = null!;
+    private matrix: Matrix<RubikCell> = null!;
 
     static create(row: number, col: number, location: Location, color: Color) {
         let ret = new RubikFace(row, col, location, color);
@@ -110,7 +111,14 @@ export class RubikFace {
     }
 
     init() {
-        this.matrix = Matrix.create(this.row, this.col);
+        let index: number = 0;
+        for (let row = 0; row < this.row; ++row) {
+            for (let col = 0; col < this.col; ++col) {
+                this.pushRubikCell(new RubikCell(row, col, this.originLocation, this.originColor, index++));
+            }
+        }
+        this.matrix = Matrix.create<RubikCell>(this.row, this.col);
+        this.matrix.reset(this.rubikCells);
     }
 
     pushRubikCell(cell: RubikCell) {
@@ -127,13 +135,13 @@ export class RubikFace {
     }
 
     resetRubikCells() {
-        this.matrix.reset();
         for (let i = 0; i < this.row; ++i) {
             for (let j = 0; j < this.col; ++j) {
                 let rubikCell = this.findRubikCell(i, j);
                 rubikCell.reset(i, j, this.originLocation, this.originColor);
             }
         }
+        this.matrix.reset(this.rubikCells);
     }
 
     clone() {
@@ -146,16 +154,6 @@ export class RubikFace {
 
     rotate(degree: number) {
         this.matrix.rotate(degree);
-        let contrast = this.clone();
-        for (let i = 0; i < this.row; ++i) {
-            for (let j = 0; j < this.col; ++j) {
-                let targetIndex = this.matrix.findElement(i, j);
-                let rubikCell = this.findRubikCell(i, j);
-                rubikCell.copy(contrast.rubikCells[targetIndex]);
-                rubikCell.row = i;
-                rubikCell.col = j;
-            }
-        }
     }
 
     get releatedLocations() {
@@ -231,7 +229,7 @@ export class RubikCube {
     constructor(order: number) {
         this.order = order;
         this.initRubik();
-        this.initCubes();
+        this.updateCubes();
     }
 
     private initRubik() {
@@ -240,21 +238,16 @@ export class RubikCube {
         this.rubikFaces.set(Location.LEFT, this.createOneRubikFace(Location.LEFT, Color.BLUE));
         this.rubikFaces.set(Location.RIGHT, this.createOneRubikFace(Location.RIGHT, Color.GREEN));
         this.rubikFaces.set(Location.FRONT, this.createOneRubikFace(Location.FRONT, Color.RED));
-        this.rubikFaces.set(Location.BEHIND, this.createOneRubikFace(Location.BEHIND, Color.PURPLE));
+        this.rubikFaces.set(Location.BACK, this.createOneRubikFace(Location.BACK, Color.PURPLE));
     }
 
     createOneRubikFace(location: Location, color: Color) {
         let rubikFace: RubikFace = RubikFace.create(this.order, this.order, location, color);
-        let index: number = 0;
-        for (let row = 0; row < this.order; ++row) {
-            for (let col = 0; col < this.order; ++col) {
-                rubikFace.pushRubikCell(new RubikCell(row, col, location, color, index++));
-            }
-        }
         return rubikFace;
     }
 
-    private initCubes() {
+    private updateCubes() {
+        this.cubes = [];
         for (let order = 0; order < this.order; ++order) {
             for (let row = 0; row < this.order; ++row) {
                 for (let col = 0; col < this.order; ++col) {
@@ -262,12 +255,12 @@ export class RubikCube {
                 }
             }
         }
-        this.cubes.forEach((data, index) => {
+        /*  this.cubes.forEach((data, index) => {
             console.log('当前块颜色：', index);
             data.cells.forEach((cell) => {
                 console.log(`${Location[cell.location]} : ${Color[cell.color]}`);
             });
-        });
+        }); */
     }
 
     shuffleRubik() {
@@ -286,6 +279,7 @@ export class RubikCube {
         this.rubikFaces.forEach((rubikFace) => {
             rubikFace.resetRubikCells();
         });
+        this.updateCubes();
     }
 
     /**
@@ -313,11 +307,12 @@ export class RubikCube {
                     releatedFaces[i].swapWithCol(releatedFaces[i + 1], isMiddle ? index - 1 : this.order - 1);
                 } else if (location == Location.FRONT) {
                     releatedFaces[i].swapWithRow(releatedFaces[i + 1], isMiddle ? index - 1 : this.order - 1);
-                } else if (location == Location.BEHIND) {
+                } else if (location == Location.BACK) {
                     releatedFaces[i].swapWithRow(releatedFaces[i + 1], isMiddle ? index - 1 : 0);
                 }
             }
         }
+        this.updateCubes();
     }
 
     getReleatedFace(location: Location) {
@@ -326,7 +321,7 @@ export class RubikCube {
             case Location.UP:
             case Location.DOWN:
             case Location.FRONT:
-            case Location.BEHIND:
+            case Location.BACK:
             case Location.LEFT:
             case Location.RIGHT:
                 locations = this.rubikFaces.get(location)!.releatedLocations;
@@ -362,7 +357,7 @@ export class RubikCube {
             locations.push(Location.UP);
         }
         if (row === 0) {
-            locations.push(Location.BEHIND);
+            locations.push(Location.BACK);
         } else if (row === RUBIK_ORDER - 1) {
             locations.push(Location.FRONT);
         }
@@ -414,7 +409,7 @@ export class RubikCube {
                 // !(0, 2, 2) -> (2, 2) (0, 2, 1) -> (2, 1) (0, 2, 0) -> (2, 0)
                 ret = { row: this.order - order - 1, col: col };
                 break;
-            case Location.BEHIND: //row定值0
+            case Location.BACK: //row定值0
                 // !(2, 0, 2) -> (0, 2) (2, 0, 1) -> (0, 1) (2, 0, 0) -> (0, 0)
                 // !(1, 0, 2) -> (1, 2) (1, 0, 1) -> (1, 1) (1, 0, 0) -> (1, 0)
                 // !(0, 0, 2) -> (2, 2) (0, 0, 1) -> (2, 1) (0, 0, 0) -> (2, 0)
@@ -436,8 +431,30 @@ export class RubikCube {
         }
         let strDown = this.rubikFaces.get(Location.DOWN)!.convertToString();
         str += strDown;
-        let strBehind = this.rubikFaces.get(Location.BEHIND)!.convertToString();
+        let strBehind = this.rubikFaces.get(Location.BACK)!.convertToString();
         str += strBehind;
         console.log('当前魔方排列为:\n', str);
     }
+
+    convertReleatedFaceToMatrix(location: Location) {
+        let matrix = new Matrix(this.order * 3, this.order * 3);
+        switch (location) {
+            case Location.UP:
+                {
+                }
+                break;
+            case Location.DOWN:
+                break;
+            case Location.LEFT:
+                break;
+            case Location.RIGHT:
+                break;
+            case Location.FRONT:
+                break;
+            case Location.BACK:
+                break;
+        }
+    }
+
+    convertMatrixToReleatedFace(matrix: Matrix<RubikCell>) {}
 }

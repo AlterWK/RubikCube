@@ -72,7 +72,7 @@ export class NodeRubik extends cc.Component {
         this.parseColor(colors, datas[Location.UP]);
         this.parseColor(colors, datas[Location.LEFT]);
         this.parseColor(colors, datas[Location.DOWN]);
-        this.parseColor(colors, datas[Location.BEHIND]);
+        this.parseColor(colors, datas[Location.BACK]);
         config.colors = colors;
         config.uvs = [];
         render.mesh = cc.utils.createMesh(config);

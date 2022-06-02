@@ -26,8 +26,6 @@ export class SceneGame extends cc.Component {
 
     initData() {
         this.rubikCube = new RubikCube(RUBIK_ORDER);
-        // this.rubikCube.rotateSide(Location.BEHIND, 3, -90);
-        // this.rubikCube.printRubikCube();
     }
 
     initUI() {
@@ -56,10 +54,12 @@ export class SceneGame extends cc.Component {
 
     onBtnRset() {
         this.rubikCube.resetRubik();
+        this.updateRubik();
     }
 
     onBtnShuffle() {
         this.rubikCube.shuffleRubik();
+        this.updateRubik();
     }
 
     /*
