@@ -1,8 +1,6 @@
 import * as cc from 'cc';
 import { Matrix } from './Matrix';
 
-const CONTRAST_NUM = 5;
-
 export const RUBIK_ORDER: number = 3;
 
 export enum Location {
@@ -26,27 +24,27 @@ const RELEATED_SET: { [index: number]: Location[] } = {
 };
 
 export enum Color {
-    WHITE = 0,
+    INDIGO = 0,
     BLUE = 1,
     RED = 2,
-    ORANGE = 3,
+    PURPLE = 3,
     GREEN = 4,
     YELLOW = 5,
     INVALID = -1,
 }
 
 export const RenderColor: { [inbdex: number]: cc.Color } = {
-    [Color.WHITE]: cc.color(255, 255, 255),
+    [Color.INDIGO]: cc.color(0, 255, 255),
     [Color.BLUE]: cc.color(0, 0, 255),
     [Color.RED]: cc.color(255, 0, 0),
-    [Color.ORANGE]: cc.color(255, 125, 0),
+    [Color.PURPLE]: cc.color(255, 0, 255),
     [Color.GREEN]: cc.color(0, 255, 0),
     [Color.YELLOW]: cc.color(255, 255, 0),
 };
 
 export class RubikCell {
     location: Location = Location.UP;
-    color: Color = Color.WHITE;
+    color: Color = Color.INDIGO;
     row: number = 0;
     col: number = 0;
     index: number = 0;
@@ -205,21 +203,21 @@ export class RubikFace {
 }
 
 /* 
-                [0, 0, 0]
-                [0, 0, 0]
-                [0, 0, 0]
+                    [0, 0, 0]                                   [0, 1, 2]
+                    [0, 0, 0]                                   [3, 4, 5]
+                    [0, 0, 0]                                   [6, 7, 8]
 
-     [1, 1, 1]  [2, 2, 2]  [4, 4, 4]
-     [1, 1, 1]  [2, 2, 2]  [4, 4, 4]
-     [1, 1, 1]  [2, 2, 2]  [4, 4, 4]
+         [1, 1, 1]  [2, 2, 2]  [4, 4, 4]            [0, 1, 2]   [0, 1, 2]   [0, 1, 2]
+         [1, 1, 1]  [2, 2, 2]  [4, 4, 4]            [3, 4, 5]   [3, 4, 5]   [3, 4, 5]
+         [1, 1, 1]  [2, 2, 2]  [4, 4, 4]            [6, 7, 8]   [6, 7, 8]   [6, 7, 8]
 
-                [5, 5, 5]
-                [5, 5, 5]
-                [5, 5, 5]
+                    [5, 5, 5]                                   [0, 1, 2]
+                    [5, 5, 5]                                   [3, 4, 5]
+                    [5, 5, 5]                                   [6, 7, 8]
 
-                [3, 3, 3]
-                [3, 3, 3]
-                [3, 3, 3]
+                    [3, 3, 3]                                   [0, 1, 2]
+                    [3, 3, 3]                                   [3, 4, 5]
+                    [3, 3, 3]                                   [6, 7, 8]
      !上下行相反，列一致，前后行相反，列一致，左右行列一致
 */
 
@@ -237,12 +235,12 @@ export class RubikCube {
     }
 
     private initRubik() {
-        this.rubikFaces.set(Location.UP, this.createOneRubikFace(Location.UP, Color.WHITE));
+        this.rubikFaces.set(Location.UP, this.createOneRubikFace(Location.UP, Color.INDIGO));
         this.rubikFaces.set(Location.DOWN, this.createOneRubikFace(Location.DOWN, Color.YELLOW));
         this.rubikFaces.set(Location.LEFT, this.createOneRubikFace(Location.LEFT, Color.BLUE));
         this.rubikFaces.set(Location.RIGHT, this.createOneRubikFace(Location.RIGHT, Color.GREEN));
         this.rubikFaces.set(Location.FRONT, this.createOneRubikFace(Location.FRONT, Color.RED));
-        this.rubikFaces.set(Location.BEHIND, this.createOneRubikFace(Location.BEHIND, Color.ORANGE));
+        this.rubikFaces.set(Location.BEHIND, this.createOneRubikFace(Location.BEHIND, Color.PURPLE));
     }
 
     createOneRubikFace(location: Location, color: Color) {
@@ -264,7 +262,12 @@ export class RubikCube {
                 }
             }
         }
-        console.log();
+        this.cubes.forEach((data, index) => {
+            console.log('当前块颜色：', index);
+            data.cells.forEach((cell) => {
+                console.log(`${Location[cell.location]} : ${Color[cell.color]}`);
+            });
+        });
     }
 
     shuffleRubik() {
@@ -368,17 +371,16 @@ export class RubikCube {
         } else if (col === RUBIK_ORDER - 1) {
             locations.push(Location.RIGHT);
         }
-        console.log(`当前查找为第${order}层，第${row}行，第${col}列`);
         for (let location of locations) {
             let data = this.convertRowColByLocation(location, order, row, col);
-            console.log(`查找到${Location[location]}，第${data.row}行，第${data.col}列`);
             let cell = this.rubikFaces.get(location)?.findRubikCell(data.row, data.col);
             ret.push(cell!);
         }
         return ret;
     }
 
-    //!: 上下行相反，列一致，前后行相反，列一致，左右行列一致
+    // !: 上下行相反，列一致，前后行相反，列一致，左右行一致, 列相反
+    // !: 这里转换是将魔方实际的行列层转到对应面的行列
     convertRowColByLocation(location: Location, order: number, row: number, col: number) {
         let ret: { row: number; col: number } = null!;
         switch (location) {
@@ -395,10 +397,10 @@ export class RubikCube {
                 ret = { row: this.order - row - 1, col: col };
                 break;
             case Location.LEFT: //col定值0
-                // !(2, 0, 0) -> (0, 2) (2, 1, 0) -> (0, 1) (2, 2, 0) -> (0, 0)
-                // !(1, 0, 0) -> (1, 2) (1, 1, 0) -> (1, 1) (1, 2, 0) -> (1, 0)
-                // !(0, 0, 0) -> (2, 2) (0, 1, 0) -> (2, 1) (0, 2, 0) -> (2, 0)
-                ret = { row: this.order - order - 1, col: this.order - row - 1 };
+                // !(2, 0, 0) -> (0, 0) (2, 1, 0) -> (0, 1) (2, 2, 0) -> (0, 2)
+                // !(1, 0, 0) -> (1, 0) (1, 1, 0) -> (1, 1) (1, 2, 0) -> (1, 2)
+                // !(0, 0, 0) -> (2, 0) (0, 1, 0) -> (2, 1) (0, 2, 0) -> (2, 2)
+                ret = { row: this.order - order - 1, col: row };
                 break;
             case Location.RIGHT: //col定值2
                 // !(2, 0, 2) -> (0, 2) (2, 1, 2) -> (0, 1) (2, 2, 2) -> (0, 0)

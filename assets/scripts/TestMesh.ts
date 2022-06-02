@@ -22,7 +22,7 @@ export class TestMesh extends cc.Component {
         colors.push(0, 255, 0, 255);
         colors.push(0, 255, 0, 255);
 
-        // back blue
+        // up blue
         colors.push(0, 0, 255, 255);
         colors.push(0, 0, 255, 255);
         colors.push(0, 0, 255, 255);
@@ -34,13 +34,13 @@ export class TestMesh extends cc.Component {
         colors.push(0, 255, 255, 255);
         colors.push(0, 255, 255, 255);
 
-        // up yellow
+        // down purple
         colors.push(255, 0, 255, 255);
         colors.push(255, 0, 255, 255);
         colors.push(255, 0, 255, 255);
         colors.push(255, 0, 255, 255);
 
-        // down purple
+        // back yellow
         colors.push(255, 255, 0, 255);
         colors.push(255, 255, 0, 255);
         colors.push(255, 255, 0, 255);

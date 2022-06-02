@@ -26,8 +26,8 @@ export class SceneGame extends cc.Component {
 
     initData() {
         this.rubikCube = new RubikCube(RUBIK_ORDER);
-        this.rubikCube.rotateSide(Location.BEHIND, 3, -90);
-        this.rubikCube.printRubikCube();
+        // this.rubikCube.rotateSide(Location.BEHIND, 3, -90);
+        // this.rubikCube.printRubikCube();
     }
 
     initUI() {
@@ -63,20 +63,20 @@ export class SceneGame extends cc.Component {
     }
 
     /*
-    !                      ▲ y
+    !                      ▲ y (order)
     !                      |
     !                      |
     !                      |
     !                      |
     !                      |
     !                      |
-    !                    o · —— —— —— —— —— ▶ x
+    !                    o · —— —— —— —— —— ▶ x (col)
     !                     ／
     !                    ／
     !                   ／
     !                  ／
     !                 ／
-    !              z ◣
+    !        z(row)  ◣
     ! 自下而上绘制各个层级的块
     */
     async createRubik() {

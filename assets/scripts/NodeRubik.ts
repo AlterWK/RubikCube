@@ -1,4 +1,5 @@
 import * as cc from 'cc';
+import { MeshConfig } from './MeshConfig';
 import { RubikCell } from './Rubik';
 import { Location } from './Rubik';
 const { ccclass, property } = cc._decorator;
@@ -63,14 +64,15 @@ export class NodeRubik extends cc.Component {
 
     paintColor(datas: { [index: number]: cc.Color }) {
         let render = this.getComponent(cc.MeshRenderer)!;
-        let config = cc.utils.readMesh(render?.mesh!);
+        // let config = cc.utils.readMesh(render?.mesh!);
+        let config = JSON.parse(JSON.stringify(MeshConfig));
         let colors: number[] = [];
         this.parseColor(colors, datas[Location.FRONT]);
         this.parseColor(colors, datas[Location.RIGHT]);
-        this.parseColor(colors, datas[Location.BEHIND]);
-        this.parseColor(colors, datas[Location.LEFT]);
         this.parseColor(colors, datas[Location.UP]);
+        this.parseColor(colors, datas[Location.LEFT]);
         this.parseColor(colors, datas[Location.DOWN]);
+        this.parseColor(colors, datas[Location.BEHIND]);
         config.colors = colors;
         config.uvs = [];
         render.mesh = cc.utils.createMesh(config);
