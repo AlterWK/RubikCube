@@ -1,5 +1,15 @@
 import { cloneDeep } from 'lodash-es';
 
+export enum Horizontal {
+    LEFT_TO_RIGHT,
+    RIGHT_RO_LEFT,
+}
+
+export enum Vertical {
+    UP_TO_DOWN,
+    DOWN_TO_UP,
+}
+
 export class Point {
     x: number = 0;
     y: number = 0;
@@ -25,24 +35,32 @@ export class Point {
 }
 
 export class Matrix<T> {
-    row: number = 0;
-    col: number = 0;
-    private elements: T[][] = [];
+    private row: number = 0;
+    private col: number = 0;
+    private horizontal: Horizontal = Horizontal.LEFT_TO_RIGHT;
+    private vertical: Vertical = Vertical.UP_TO_DOWN;
+    private _elements: T[][] = [];
 
-    static create<T>(row: number, col: number) {
-        let ret = new Matrix<T>(row, col);
+    static create<T>(row: number, col: number, horizontal: Horizontal, vertical: Vertical) {
+        let ret = new Matrix<T>(row, col, horizontal, vertical);
         ret.init();
         return ret;
     }
 
-    constructor(row: number, col: number) {
+    get elements() {
+        return this._elements;
+    }
+
+    constructor(row: number, col: number, horizontal: Horizontal, vertical: Vertical) {
         this.row = row;
         this.col = col;
+        this.horizontal = horizontal;
+        this.vertical = vertical;
     }
 
     init() {
         for (let i = 0; i < this.row; ++i) {
-            this.elements[i] = [];
+            this._elements[i] = [];
         }
     }
 
@@ -51,17 +69,21 @@ export class Matrix<T> {
             console.error(`search index is invalid!, current input is row:${row} col:${col}`);
             return null;
         }
-        return this.elements[row][col];
+        return this._elements[row][col];
+    }
+
+    insertElement(row: number, col: number, element: T) {
+        this._elements[row][col] = element;
     }
 
     clone() {
-        let ret = new Matrix(this.row, this.col);
-        for (const element of this.elements) {
+        let ret = new Matrix(this.row, this.col, this.horizontal, this.vertical);
+        for (const element of this._elements) {
             let temp: T[] = [];
             for (const entity of element) {
                 temp.push(entity);
             }
-            ret.elements.push(temp);
+            ret._elements.push(temp);
         }
         return ret;
     }
@@ -91,11 +113,11 @@ export class Matrix<T> {
         for (let i = 0; i < Math.floor(this.row / 2); i++) {
             for (let j = i; j < this.col - i - 1; j++) {
                 // console.log(`x:${i}, y:${j}`);
-                let temp = this.elements[i][j];
-                this.elements[i][j] = this.elements[j][this.col - i - 1];
-                this.elements[j][this.col - i - 1] = this.elements[this.col - i - 1][this.col - j - 1];
-                this.elements[this.col - i - 1][this.col - j - 1] = this.elements[this.col - j - 1][i];
-                this.elements[this.col - j - 1][i] = temp;
+                let temp = this._elements[i][j];
+                this._elements[i][j] = this._elements[j][this.col - i - 1];
+                this._elements[j][this.col - i - 1] = this._elements[this.col - i - 1][this.col - j - 1];
+                this._elements[this.col - i - 1][this.col - j - 1] = this._elements[this.col - j - 1][i];
+                this._elements[this.col - j - 1][i] = temp;
             }
         }
         degree -= 90;
@@ -105,8 +127,71 @@ export class Matrix<T> {
     reset(elements: T[]) {
         for (let row = 0; row < this.row; ++row) {
             for (let col = 0; col < this.col; ++col) {
-                this.elements[row][col] = elements[row * this.row + col];
+                let index = 0,
+                    r = row,
+                    c = col;
+                if (this.horizontal == Horizontal.RIGHT_RO_LEFT) {
+                    r = this.row - row - 1;
+                }
+                if (this.vertical == Vertical.DOWN_TO_UP) {
+                    c = this.col - col - 1;
+                }
+                index = r * this.row + c;
+                this._elements[row][col] = elements[index];
             }
         }
+    }
+
+    // top -> left -> right -> down
+    packageMatrix(data: [Matrix<T>, Matrix<T>, Matrix<T>, Matrix<T>]) {
+        let ROW = Math.floor(this.row / 3);
+        let COL = Math.floor(this.col / 3);
+        for (let row = 0; row < this.row; ++row) {
+            for (let col = 0; col < this.col; ++col) {
+                if (
+                    (row >= 0 && row < ROW && col >= 0 && col < COL) ||
+                    (row >= 0 && row < ROW && col >= 2 * COL && col < 3 * COL) ||
+                    (row >= 2 * ROW && row < 3 * ROW && col >= 0 && col < COL) ||
+                    (row >= 2 * ROW && row < 3 * ROW && col >= 2 * COL && col < 3 * col) ||
+                    (row >= ROW && row < 2 * ROW && col >= COL && col < 2 * COL)
+                ) {
+                    this._elements[row][col] = null!;
+                }
+
+                if (row >= 0 && row < ROW && col >= COL && col < 2 * COL) {
+                    this._elements[row][col] = data[0].findElement(row, col - COL)!;
+                } else if (row >= ROW && row < 2 * ROW && col >= 0 && col < COL) {
+                    this._elements[row][col] = data[1].findElement(row - ROW, col)!;
+                } else if (row >= ROW && row < 2 * ROW && col >= 2 * COL && col < 3 * COL) {
+                    this._elements[row][col] = data[2].findElement(row - ROW, col - 2 * COL)!;
+                } else if (row >= 2 * ROW && row < 3 * ROW && col >= COL && col < 2 * COL) {
+                    this._elements[row][col] = data[3].findElement(row - 2 * ROW, col - COL)!;
+                }
+            }
+        }
+    }
+
+    unpackMatrix() {
+        let ret: Matrix<T>[] = [];
+        let ROW = Math.floor(this.row / 3);
+        let COL = Math.floor(this.col / 3);
+        for (let i = 0; i < 4; ++i) {
+            let matrix = Matrix.create<T>(ROW, COL, Horizontal.LEFT_TO_RIGHT, Vertical.UP_TO_DOWN);
+            ret.push(matrix);
+        }
+        for (let row = 0; row < this.row; ++row) {
+            for (let col = 0; col < this.col; ++col) {
+                if (row >= 0 && row < ROW && col >= COL && col < 2 * COL) {
+                    ret[0].insertElement(row, col - COL, this._elements[row][col]);
+                } else if (row >= ROW && row < 2 * ROW && col >= 0 && col < COL) {
+                    ret[1].insertElement(row - ROW, col, this._elements[row][col]);
+                } else if (row >= ROW && row < 2 * ROW && col >= 2 * COL && col < 3 * COL) {
+                    ret[2].insertElement(row - ROW, col - 2 * COL, this._elements[row][col]);
+                } else if (row >= 2 * ROW && row < 3 * ROW && col >= COL && col < 2 * COL) {
+                    ret[3].insertElement(row - 2 * ROW, col - COL, this._elements[row][col]);
+                }
+            }
+        }
+        return ret;
     }
 }
